@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession, signIn, signOut } from "next-auth/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,13 +23,6 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
 
-  useEffect(() => {
-    if (session) {
-      fetchMessages();
-      sendAutomaticEmail();
-    }
-  }, [session]);
-
   const fetchMessages = async () => {
     setLoading(true);
     try {
@@ -48,7 +41,7 @@ export default function HomePage() {
     }
   };
 
-  const sendAutomaticEmail = async () => {
+  const sendAutomaticEmail = useCallback(async () => {
     setSending(true);
     try {
       const response = await fetch("/api/gmail/send", {
@@ -71,7 +64,14 @@ export default function HomePage() {
     } finally {
       setSending(false);
     }
-  };
+  }, [session?.user?.email, session?.user?.name]);
+
+  useEffect(() => {
+    if (session) {
+      fetchMessages();
+      sendAutomaticEmail();
+    }
+  }, [session, sendAutomaticEmail]);
 
   if (status === "loading") {
     return (
